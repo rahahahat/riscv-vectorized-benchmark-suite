@@ -78,6 +78,8 @@ int main(int argc, char *argv[])
     printf("axpy_reference time: %f\n", elapsed_time(start, end));
 
     capture_ref_result(dy, dy_ref, n);
+
+    #ifdef USE_RISCV_VECTOR
     init_vector(dx, n, 1.0);
     init_vector(dy, n, 2.0);
 
@@ -86,7 +88,8 @@ int main(int argc, char *argv[])
     axpy_intrinsics(a, dx, dy, n);
     end = get_time();
     printf("axpy_intrinsics time: %f\n", elapsed_time(start, end));
-    
+    #endif
+
     printf ("done\n");
     test_result(dy, dy_ref, n);
 

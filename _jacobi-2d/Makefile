@@ -1,28 +1,28 @@
-#makefile
-GCC_TOOLCHAIN_DIR := /newlib/
+GCC_TOOLCHAIN_DIR := /home/rahat/local/rv-gnu-tc-install
 SYSROOT_DIR := $(GCC_TOOLCHAIN_DIR)/riscv64-unknown-elf
 
-LLVM := /llvm/build/
+LLVM := /home/rahat/local/riscv-llvm/install
 SPIKE := spike
 PK := pk
 
-target = bin/jacobi-2d_vector.exe
+target = bin/j2d-rvv
 
-start:
-	mkdir -p bin; \
-	rm bin/*.*
+# start:
+# 	mkdir -p bin; \
+# 	rm bin/*.*
 	
-serial:
-	${LLVM}/bin/clang++ -mepi -Wall --target=riscv64-unknown-elf -O2 -c -o src/jacobi-2d.o src/jacobi-2d.cpp; \
-	${LLVM}/bin/clang++ -mepi -Wall --target=riscv64-unknown-elf  -march=rv64g -O2 -o bin/jacobi-2d_serial.exe src/*.o -lm; \
+all: auto-vec vector
+auto-vec:
+	${LLVM}/bin/clang++ -Wall --target=riscv64-unknown-elf -march=rv64gcv --sysroot=$(SYSROOT_DIR) --gcc-toolchain=$(GCC_TOOLCHAIN_DIR) -O2 -c -o src/jacobi-2d.o src/jacobi-2d.cpp; \
+	${LLVM}/bin/clang++ -Wall --target=riscv64-unknown-elf -march=rv64gcv --sysroot=$(SYSROOT_DIR) --gcc-toolchain=$(GCC_TOOLCHAIN_DIR) -O2 -o j2d-av-rvv src/*.o -lm; \
 	rm src/*.o; \
-	${LLVM}/bin/llvm-objdump --mattr=+v -ds  bin/jacobi-2d_serial.exe > bin/jacobi-2d_serial.dump
 
 vector:
-	${LLVM}/bin/clang++ -Wall --target=riscv64-unknown-elf -DUSE_RISCV_VECTOR -march=rv64gcv1p0 -menable-experimental-extensions --sysroot=$(SYSROOT_DIR) --gcc-toolchain=$(GCC_TOOLCHAIN_DIR) -O2 -c -o src/jacobi-2d.o src/jacobi-2d.cpp; \
-	${LLVM}/bin/clang++ -Wall --target=riscv64-unknown-elf -DUSE_RISCV_VECTOR -march=rv64gcv1p0 -menable-experimental-extensions --sysroot=$(SYSROOT_DIR) --gcc-toolchain=$(GCC_TOOLCHAIN_DIR) -O2 -o bin/jacobi-2d_vector.exe src/*.o -lm ; \
+	${LLVM}/bin/clang++ -Wall -fno-vectorize --target=riscv64-unknown-elf -DUSE_RISCV_VECTOR -march=rv64gcv1p0 -menable-experimental-extensions --sysroot=$(SYSROOT_DIR) --gcc-toolchain=$(GCC_TOOLCHAIN_DIR) -O2 -c -o src/jacobi-2d.o src/jacobi-2d.cpp; \
+	${LLVM}/bin/clang++ -Wall -fno-vectorize --target=riscv64-unknown-elf -DUSE_RISCV_VECTOR -march=rv64gcv1p0 -menable-experimental-extensions --sysroot=$(SYSROOT_DIR) --gcc-toolchain=$(GCC_TOOLCHAIN_DIR) -O2 -o j2d-rvv src/*.o -lm ; \
 	rm src/*.o ; \
-	${LLVM}/bin/llvm-objdump --mattr=+v -ds  bin/jacobi-2d_vector.exe > bin/jacobi-2d_vector.dump ; \
+	
+# ${LLVM}/bin/llvm-objdump --mattr=+v -ds  bin/jacobi-2d_vector.exe > bin/jacobi-2d_vector.dump ; \
 
 runspike :
 	$(SPIKE) --isa=rv64gcv $(PK) $(target) 64 100 jacobi_2d.out
